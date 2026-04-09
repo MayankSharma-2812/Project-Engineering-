@@ -1,55 +1,44 @@
-# Vibe vs. Pair Challenge: Task Manager
+# Vibe vs. Pair Challenge
 
-This challenge compares two modern AI-assisted development workflows: **Vibe Coding** (rapid generation) and **AI Pair Programming** (iterative collaboration with Antigravity).
+This challenge involves building the same Task Manager application twice to compare two distinct AI-assisted development workflows: **Vibe Coding** (using generative UI/app tools) and **AI Pair Programming** (using editor-integrated assistants). By the end, you'll have a clear understanding of the strengths and weaknesses of each approach.
 
-## The App Specification
+## The App You Are Building
 
-Both versions implement a standalone Task Manager with the following features:
-1. **Add a task** (Enter key & button support)
-2. **Mark complete** (Visual toggle & strike-through)
-3. **Filter** (All, Active, Completed)
-4. **Task count** (Real-time dynamic updates)
+You will be building a standalone Task Manager. You must strictly follow the requirements outlined in the [app-spec.md](./app-spec.md) file for both versions.
 
-## Folders
+## Your Folders
 
-- `/vibe-version`: Rapidly generated version with a focus on speed and immediate "vibe" (Functional, Monolithic).
-- `/pair-version`: Iteratively built with **Antigravity**, prioritizing premium UX and clean architecture (Modular, Professional).
+- `/vibe-version`: Use this folder for the version built using a "vibe" tool (e.g., Lovable, v0, Google AI Studio Build).
+- `/pair-version`: Use this folder for the version built using an AI pair programming assistant (Antigravity).
+
+## Live Deployments
+
+- Vibe version: [Pending Deployment]
+- Pair version: [Pending Deployment]
 
 ## Comparison Table
 
-| Dimension | Vibe Version | Pair Version (Antigravity) |
+Fill out the following table after completing both versions:
+
+| Dimension | Vibe Version | Pair Version |
 | :--- | :--- | :--- |
-| **Speed** | 🚀 Unmatched (Instant generation) | ⏱️ Balanced (Slightly slower for quality) |
-| **Control** | 🧊 Rigid (Harder to modify deep logic) | 🛠️ Total (Granular control over CSS & State) |
-| **UX/Design** | 📦 Standard (Functional, generic UI) | ✨ Premium (Glassmorphism, Micro-animations) |
-| **Explainability** | 🌫️ Low (AI-generated black box) | 💡 High (Intentional, structured code) |
-| **Editability** | 🔁 Hard (Requires re-generation) | 🏗️ Easy (Modular CSS variables & clean React) |
+| **Speed** | Exceptional (Immediate generation) | Efficient (Iterative refinements) |
+| **Control** | Limited (Black-box generation) | High (Granular design control) |
+| **Code Quality** | Functional but rigid | Structured and modular |
+| **Explainability** | Medium | High (Every line is intentional) |
+| **Editability** | Difficult (Requires re-generation) | Easy (Clear CSS and logic separation) |
 
-## Final Verdict
+## When I Would Use Each Tool
 
-- **Use Vibe (e.g., Lovable, v0)** when you need to visualize an idea *instantly* or build a simple internal tool where aesthetics and code maintainability are secondary to delivery speed.
-- **Use Pair Programming (Antigravity)** when building production-grade features that require high performance, a sophisticated design system, and maintainable code architecture.
-
-## How to Run
-
-### Vibe Version
-Navigate to `/vibe-version`:
-```bash
-npm install
-npm run dev
-```
-
-### Pair Version
-Navigate to `/pair-version`:
-```bash
-npm install
-npm run dev
-```
+- **Vibe Tools:** Best for rapid prototyping where speed is the only priority and code structure is secondary.
+- **Pair Programming AI:** Best for building long-term, maintainable applications with premium UX and specific design requirements.
 
 ## Tools Used
 
-- **Vibe tool:** Lovable / v0
-- **Pair tool:** Antigravity (Google DeepMind)
+- **Vibe tool used:** Lovable / v0
+- **Pair tool used:** Antigravity (Google DeepMind)
 
----
-*Completed by Antigravity for Milestone 01, Challenge 1.9*
+## How to Submit
+
+1. **PR Link:** [Ready for Review]
+2. **Video Link:** [Drafting Demo]
