@@ -40,5 +40,12 @@ Fill out the following table after completing both versions:
 
 ## How to Submit
 
-1. **PR Link:** [Ready for Review]
-2. **Video Link:** [Drafting Demo]
+**Vibe Tool Used:** Lovable / v0
+**Pair Tool Used:** Antigravity (Google DeepMind)
+
+**Live URLs:**
+- **Vibe version:** [Localhorst:5173]
+- **Pair version:** [Localhost:5174]
+
+**Key Observation:**
+The **Vibe version** was impressively fast for establishing the core "look and feel" in seconds, but became challenging to customize once the CSS was tightly coupled. The **Pair version (Antigravity)** took slightly longer but resulted in a significantly more **premium UI** with cleaner, modular CSS that is much easier to maintain and extend.
