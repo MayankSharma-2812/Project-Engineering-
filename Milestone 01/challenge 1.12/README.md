@@ -64,8 +64,23 @@ User → Frontend (index.html) → Your Backend (/chat) → OpenRouter API
 
 ## Live Deployment
 
-**Frontend URL:** <!-- Add after deploying -->  
-**Backend URL:** <!-- Add after deploying -->
+**Frontend URL:** [Add your Netlify/Vercel URL here]  
+**Backend URL:** [Add your Render URL here]
+
+## Assignment Questions
+
+### Question 1: API and Model
+**API:** OpenRouter API  
+**Model:** `openai/gpt-4o-mini`
+
+### Question 2: Why Backend Proxying?
+Performing the AI API call from the backend is critical for security because API keys hardcoded in frontend JavaScript are easily extractable by anyone using browser DevTools. By using a backend proxy, the sensitive API key remains on the server and is never sent to the user's browser, preventing unauthorized usage and potential financial or quota theft.
+
+### Question 3: Fallback Provider
+If OpenRouter runs out of credits, I would switch to **Google Gemini API** (via Google AI Studio). To implement this shift, I would change two things in the code:
+1. Update the base URL from `https://openrouter.ai/api/v1/chat/completions` to `https://generativelanguage.googleapis.com/v1beta/openai/` (OpenAI-compatible endpoint).
+2. Update the model name in the request body to `gemini-1.5-flash`.
+
 
 ## What to Submit
 

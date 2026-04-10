@@ -34,11 +34,32 @@ async function sendMessage() {
     // 3. Clear input
     messageInput.value = "";
 
-    // TODO: Call your backend /chat route here
-    // Send the full `messages` array — not just the latest message
-    // Hint: fetch('http://localhost:3000/chat', { method: 'POST', ... })
-    // On response: add { role: 'assistant', content: reply } to messages
-    // Render the assistant bubble in chatDisplay
+    try {
+        // 4. Call your backend /chat route
+        const response = await fetch('http://localhost:3000/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ messages })
+        });
+
+        const data = await response.json();
+
+        if (data.reply) {
+            // 5. Add assistant response to state
+            messages.push({ role: "assistant", content: data.reply });
+            
+            // 6. Render assistant bubble
+            renderMessage("assistant", data.reply);
+        } else {
+            console.error("Error from backend:", data.error);
+            renderMessage("assistant", "Sorry, I encountered an error. Please check the console.");
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        renderMessage("assistant", "Could not connect to the server. Make sure the backend is running.");
+    }
 }
 
 // Event Listeners
