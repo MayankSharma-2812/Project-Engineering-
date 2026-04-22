@@ -23,15 +23,38 @@ app.get('/health', (req, res) => {
  * This is where the magic happens.
  */
 app.post('/chat', async (req, res) => {
-  // TODO: Implement the AI chat route
-  // 1. Extract `messages` from req.body
-  // 2. Read API key from process.env.OPENROUTER_API_KEY
-  // 3. POST to https://openrouter.ai/api/v1/chat/completions
-  //    with Authorization: Bearer <key> and the messages array
-  // 4. Return the AI reply as { reply: "..." }
-  
-  // Placeholder response (will be replaced by student)
-  res.status(501).json({ error: "Method Not Implemented" });
+  const { messages } = req.body;
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!messages) {
+    return res.status(400).json({ error: "Messages are required" });
+  }
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'openai/gpt-4o-mini',
+        messages: messages
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error("OpenRouter Error:", data.error);
+      return res.status(500).json({ error: data.error.message });
+    }
+
+    res.json({ reply: data.choices[0].message.content });
+  } catch (error) {
+    console.error("Server Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 app.listen(PORT, () => {
