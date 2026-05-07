@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useCart } from './useCart';
 import CartItem from './CartItem';
-import { formatCurrency } from './formatCurrency';
-import EmptyState from './EmptyState';
-import Button from './Button';
+import { formatCurrency } from '../../utils/formatCurrency';
+import EmptyState from '../../components/EmptyState';
+import Button from '../../components/Button';
 import CheckoutModal from './CheckoutModal';
 import { ShoppingBag, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
