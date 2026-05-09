@@ -1,5 +1,5 @@
 import React from 'react';
-import OrdersList from './OrdersList';
+import OrdersList from '../orders/OrdersList';
 import { Package, User, Clock, ArrowRight, Calculator, Box } from 'lucide-react';
 
 const Dashboard = () => {
