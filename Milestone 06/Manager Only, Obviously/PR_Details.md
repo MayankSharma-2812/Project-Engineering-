@@ -59,7 +59,7 @@ All 8 security scenarios tested and verified:
 ## Security Impact
 **Before**: Complete RBAC bypass - any authenticated user could perform any action
 **After**: Proper role-based access control with principle of least privilege
-
+<!-- //RBAC implementation completed - all security gaps fixed" >> middleware/roleMiddleware.js -->
 ## Files Changed
 - `controllers/authController.js` - Fixed JWT token generation
 - `middleware/roleMiddleware.js` - Created role enforcement middleware
