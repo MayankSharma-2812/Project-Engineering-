@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Mission {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @db.Text
+  launchDate  DateTime @default(now())
+  rocket      String
+  status      String   @default("planning")
+  crew        Crew[]
+  logs        MissionLog[]
+}
+
+model Crew {
+  id        Int      @id @default(autoincrement())
+  name      String
+  role      String
+  missionId Int
+  mission   Mission @relation(fields: [missionId], references: [id])
+}
+
+model MissionLog {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  event     String
+  details   String   @db.Text
+  missionId Int
+  mission   Mission @relation(fields: [missionId], references: [id])
+}

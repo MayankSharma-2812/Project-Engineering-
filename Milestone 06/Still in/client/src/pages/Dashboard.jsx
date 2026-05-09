@@ -43,12 +43,19 @@ const Dashboard = () => {
       await vote(optionId);
       await fetchPoll();
     } catch (err) {
-      // INTENTIONAL MISHANDLING: JUST SHOW ALERT
+      // FIXED: Let the 401 interceptor handle session cleanup
       alert(err.response?.data?.message || 'Vote failed. Token might be expired.');
-      // The user remains on the dashboard, and the polling continues even if 401 or 500
     } finally {
       setVoting(null);
     }
+  };
+
+  // Cleanup polling on logout
+  const handleLogout = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    logout();
   };
 
   const totalVotes = polls.reduce((sum, p) => sum + p.count, 0);
@@ -67,7 +74,7 @@ const Dashboard = () => {
           </div>
         </div>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg transition-colors border border-red-500/50 font-bold"
         >
           <LogOut size={18} />
@@ -103,7 +110,7 @@ const Dashboard = () => {
                   </h3>
                   <span className="text-2xl font-black text-blue-400">{Math.round(percentage)}%</span>
                 </div>
-                
+
                 {/* Animated Progress Bar */}
                 <div className="h-4 bg-slate-900 rounded-full overflow-hidden border border-slate-700">
                   <motion.div
@@ -117,11 +124,10 @@ const Dashboard = () => {
                 <button
                   onClick={() => handleVote(option.id)}
                   disabled={voting !== null}
-                  className={`w-full py-4 rounded-xl flex items-center justify-center space-x-2 font-black transition-all transform active:scale-95 ${
-                    voting === option.id 
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
+                  className={`w-full py-4 rounded-xl flex items-center justify-center space-x-2 font-black transition-all transform active:scale-95 ${voting === option.id
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
                     : 'bg-white text-slate-900 hover:bg-blue-50 px-6'
-                  }`}
+                    }`}
                 >
                   {voting === option.id ? (
                     <RefreshCcw size={20} className="animate-spin" />
