@@ -1,23 +1,44 @@
 import prisma from '../../lib/prisma.js';
 
-export async function getAllOrdersWithItems() {
-  const orders = await prisma.order.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+export async function getAllOrdersWithItems(page = 1, limit = 20) {
+  const skip = (page - 1) * limit;
 
-  for (const order of orders) {
-    const items = await prisma.orderItem.findMany({
-      where: { orderId: order.id },
-      select: { id: true, productName: true, quantity: true, price: true },
-    });
-    order.items = items;
-  }
+  const [orders, totalCount] = await Promise.all([
+    prisma.order.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        reference: true,
+        status: true,
+        createdAt: true,
+        items: {
+          select: {
+            id: true,
+            productName: true,
+            quantity: true,
+            price: true,
+          },
+        },
+      },
+    }),
+    prisma.order.count(),
+  ]);
 
-  return orders.map((order) => ({
-    id: order.id,
-    reference: order.reference,
-    status: order.status,
-    createdAt: order.createdAt,
-    items: order.items,
-  }));
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  return {
+    data: orders,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage,
+      hasPrevPage,
+    },
+  };
 }
