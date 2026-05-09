@@ -1,10 +1,13 @@
 import express from 'express';
+import compression from 'compression';
 import postsRouter from './routes/posts.js';
 import ordersRouter from './routes/orders.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enable gzip compression
+app.use(compression());
 app.use(express.json());
 
 app.get('/health', (req, res) => {

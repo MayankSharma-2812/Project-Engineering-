@@ -1,69 +1,13 @@
-# Concurrency Explainer
+# Concurrency and Performance Explainer
 
-**Your name:**
-**Date:**
+## The Root Cause: Why Check-Then-Insert Fails
+A "race condition" occurs when two or more threads (or concurrent requests) access shared data and try to change it simultaneously. In the original "check-then-insert" pattern, the backend first checked if a seat was available using `findFirst()`. If two users attempted to book the exact same seat at the exact same millisecond, both of their `findFirst()` checks would return `null` (available). Because there is a tiny delay between executing the check and performing the database insertion, both requests slip through this gap, and two separate `create()` calls are fired. Both queries succeed, resulting in a double-booked seat. Application-level validation is simply too slow and not atomic enough to prevent this.
 
----
+## The Unique Constraint: The Ultimate Fix
+By applying `@@unique([seatId, showId])` at the database level in Prisma, we delegate the concurrency control to the database engine itself (PostgreSQL). Database constraints are guaranteed to be atomic. When two concurrent requests try to insert a record for the same seat and show, the database processes one first and physically locks the table or index for that row. The second insert attempt will immediately violate the unique constraint and be rejected by the database. This completely closes the check-then-insert gap and eliminates the race condition.
 
-## The Root Cause — Why Check-Then-Insert Fails
+## The Rate Limiter: Why It's Needed, But Not Enough
+The rate limiter (Defense Layer 1) restricts the number of requests a single IP address can make (e.g., 10 requests per minute). This protects the server from bot attacks and DDoS floods that could consume all resources or crash the database. However, a rate limiter *cannot* stop a race condition on its own. If two entirely different users (from different IPs) click "Book" at the exact same time, the rate limiter allows both requests through since neither IP has exceeded their limit. Without the unique constraint, a double booking would still occur.
 
-<!-- 
-  Explain what a race condition is in the context of this endpoint.
-  Why does checking with findFirst() before creating with create() fail 
-  when two requests arrive at the same millisecond?
-  What is the "gap" between the check and the insert?
-  
-  Minimum: 2 paragraphs
--->
-
-Your explanation here.
-
----
-
-## Why the Unique Constraint Fixes It
-
-<!--
-  Explain why moving the check from application code (findFirst) to the
-  database level (@@unique constraint) actually closes the race condition.
-  
-  Why can't application-layer checking solve this, no matter how fast it runs?
-  What does the database do differently that makes it atomic?
-  
-  Minimum: 1 paragraph
--->
-
-Your explanation here.
-
----
-
-## Why Rate Limiting Alone Is Not Enough
-
-<!--
-  Explain why adding express-rate-limit without the @@unique constraint
-  would still allow double bookings.
-  
-  Give a concrete scenario: two users, one request each, both within the limit.
-  What happens without the constraint?
-  
-  Minimum: 1 paragraph
--->
-
-Your explanation here.
-
----
-
-## What P2002 Means and Why 409
-
-<!--
-  What does Prisma error code P2002 mean?
-  Why is 409 Conflict the correct HTTP status to return when it fires?
-  Why not 400 Bad Request? Why not 500 Internal Server Error?
-  
-  Minimum: 1 paragraph
--->
-
-Your explanation here.
-
----
-
-**Total word count:** (aim for 300–600 words across all four sections)
+## The P2002 Catch: Graceful Error Handling
+When the database rejects the second concurrent insertion due to the `@@unique` constraint, Prisma throws a specific error code: `P2002` (Unique constraint failed). Instead of letting this crash the app and returning a generic `500 Internal Server Error`, we explicitly catch this code in our `try/catch` block. We then return a `409 Conflict` status. This is the correct semantic HTTP response, telling the client "Your request was perfectly valid, but it conflicts with the current state of the database (someone else beat you to it)."
