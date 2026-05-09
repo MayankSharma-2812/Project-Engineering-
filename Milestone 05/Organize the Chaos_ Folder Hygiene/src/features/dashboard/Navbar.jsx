@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingCart, LayoutDashboard, Store, User } from 'lucide-react';
-import LogoutButton from './LogoutButton';
+import LogoutButton from '../auth/LogoutButton';
 
 const Navbar = ({ cartCount, onLogout }) => {
   const location = useLocation();

@@ -1,8 +1,6 @@
-// 🚨 BROKEN: Another component doing everything itself.
-// Notice this is basically copy-pasted from ProductsPage — every dev writes fetch() differently!
-
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { productService, cartService, userService } from '../services/api'
 
 const enrich = (p) => ({
   ...p,
@@ -24,61 +22,48 @@ export default function ProductDetailPage() {
   const [inCart, setInCart] = useState(false)
   const [reviewLoading, setReviewLoading] = useState(false)
 
-  // ❌ BAD: Yet another hardcoded URL with its own error handling pattern
   useEffect(() => {
-    setLoading(true)
-    fetch(`https://fakestoreapi.com/products/${id}`)
-      .then(async res => {
-        if (res.status === 404) throw new Error('Product not found')
-        // ❌ No handling for 401, 500, etc.
-        return res.json()
-      })
-      .then(data => {
-        const enriched = enrich(data)
+    const fetchProductData = async () => {
+      setLoading(true)
+      try {
+        const res = await productService.getProductById(id)
+        const enriched = enrich(res.data)
         setProduct(enriched)
-        // ❌ Nested fetch inside a fetch — spaghetti code!
-        return fetch(`https://fakestoreapi.com/products/category/${enriched.category}`)
-      })
-      .then(res => res.json())
-      .then(items => {
-        setRelated(items.filter(p => p.id !== parseInt(id)).slice(0, 3))
+        
+        const relatedRes = await productService.getProductsByCategory(enriched.category)
+        setRelated(relatedRes.data.filter(p => p.id !== parseInt(id)).slice(0, 3))
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setError('Product not found')
+        } else {
+          setError(err.message || 'Failed to load product')
+        }
+      } finally {
         setLoading(false)
-      })
-      .catch(err => {
-        setError(err.message)
-        setLoading(false)
-      })
+      }
+    }
+    fetchProductData()
   }, [id])
 
-  // ❌ Token grabbed manually AGAIN — fourth time in this codebase
   const handleAddToCart = async () => {
-    const token = localStorage.getItem('auth_token')
     try {
-      const res = await fetch('https://fakestoreapi.com/carts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId: 1, date: new Date().toISOString(), products: [{ productId: product.id, quantity: 1 }] }),
+      await cartService.addToCart({ 
+        userId: 1, 
+        date: new Date().toISOString(), 
+        products: [{ productId: product.id, quantity: 1 }] 
       })
-      if (!res.ok) throw new Error('Cart update failed')
       setInCart(true)
     } catch (err) {
-      alert('Failed to add: ' + err.message) // alert()? seriously?
+      alert('Failed to add: ' + err.message)
     }
   }
 
   const handleReview = async (e) => {
     e.preventDefault()
     setReviewLoading(true)
-    const token = localStorage.getItem('auth_token') // copied AGAIN
     try {
-      await fetch('https://fakestoreapi.com/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ productId: id, rating: 5 }),
-      })
+      // Assuming reviews are handled by user service for this demo
+      await userService.updateUserProfile(1, { productId: id, rating: 5 })
       setReviewLoading(false)
       alert('Review submitted!')
     } catch (err) {

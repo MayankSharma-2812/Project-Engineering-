@@ -1,8 +1,8 @@
 import React from 'react';
 import { ShoppingCart } from 'lucide-react';
-import { formatCurrency } from './formatCurrency';
-import { truncateText } from './truncateText';
-import Button from './Button';
+import { formatCurrency } from '../../utils/formatCurrency';
+import { truncateText } from '../../utils/truncateText';
+import Button from '../../components/Button';
 
 const ProductCard = ({ product, onAddToCart }) => {
   return (
