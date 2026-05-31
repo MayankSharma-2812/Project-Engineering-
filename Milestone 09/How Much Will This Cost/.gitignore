@@ -1,0 +1,4 @@
+node_modules/
+.env
+generate-token.js
+run-tests.js

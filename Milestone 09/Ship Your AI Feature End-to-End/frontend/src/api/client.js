@@ -1,24 +1,24 @@
 // frontend/src/api/client.js
 // CONSTRAINT 1: API key must NEVER appear in this file.
 // The frontend calls YOUR backend. The backend calls OpenRouter.
-// Replace '/analyze' with your actual endpoint.
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-export async function analyzeContent(input, token) {
-  const response = await fetch(`${API_BASE}/api/analyze`, {
+export async function reviewSolution(problemStatement, solution, language, token) {
+  const response = await fetch(`${API_BASE}/api/review-solution`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
-    body: JSON.stringify({ text: input })  // Update field name to match your feature
+    body: JSON.stringify({ problemStatement, solution, language })
   })
 
+  const data = await response.json()
+
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Request failed')
+    throw new Error(data.message || data.error || `Request failed with status ${response.status}`)
   }
 
-  return response.json()
+  return data
 }
