@@ -41,18 +41,25 @@ function App() {
 
   // BROKEN: Double fetch on mount + no cleanup
   useEffect(() => {
-    fetchMissions();
-    fetchMissions(); // Second fetch in React Strict Mode
+    const controller = new AbortController();
+    fetchMissions(controller.signal);
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  const fetchMissions = async () => {
+  const fetchMissions = async (signal) => {
     try {
       setLoading(true);
-      // BROKEN: No AbortController - can't cancel requests
-      const response = await axios.get('http://localhost:3001/api/missions');
-      setMissions(response.data);
+      // Fetch all missions with limit=200 for frontend state holding and client-side slicing
+      const response = await axios.get('http://localhost:3001/api/missions?limit=200', { signal });
+      setMissions(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch missions:', error);
+      if (axios.isCancel(error)) {
+        console.log('Request canceled', error.message);
+      } else {
+        console.error('Failed to fetch missions:', error);
+      }
     } finally {
       setLoading(false);
     }
