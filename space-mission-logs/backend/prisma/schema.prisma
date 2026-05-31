@@ -10,7 +10,7 @@ datasource db {
 model Mission {
   id          Int      @id @default(autoincrement())
   name        String
-  description String   @db.Text
+  description String
   launchDate  DateTime @default(now())
   rocket      String
   status      String   @default("planning")
@@ -30,7 +30,7 @@ model MissionLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
   event     String
-  details   String   @db.Text
+  details   String
   missionId Int
   mission   Mission @relation(fields: [missionId], references: [id])
 }

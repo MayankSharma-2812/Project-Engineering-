@@ -9,8 +9,8 @@ Systematically optimize 9 performance bottlenecks (4 backend, 5 frontend) in Spa
 
 ### Backend Baseline (Before Optimization)
 **API Endpoint**: GET /api/missions
-- **Response Time**: 2,500-3,000ms (2.5-3 seconds)
-- **Payload Size**: ~800KB (all 200 missions with full data)
+- **Response Time**: 446ms (cold start 4,736ms)
+- **Payload Size**: 620.7 KB (620,658 bytes)
 - **Database Queries**: 401 queries (1 for missions + 400 for crew/logs)
 - **Memory Usage**: High - loads all missions + related data
 - **Network Transfer**: Uncompressed JSON responses
@@ -191,10 +191,10 @@ const handleDelete = useCallback(async (missionId) => {
 ### Backend Performance Delta
 | Metric | Before | After | Improvement |
 |---------|--------|-------|-------------|
-| Database Queries | 401 | 1 | 99.75% reduction |
-| Response Time | 2.5-3s | 150-200ms | 93% faster |
-| Payload Size | 800KB | 120KB | 85% reduction |
-| Network Transfer | 800KB | 36KB (compressed) | 95% reduction |
+| Database Queries | 401 | 4 | 99% reduction |
+| Response Time | 446ms | 23ms | 95% faster |
+| Payload Size | 620.7KB | 22.3KB | 96.4% reduction |
+| Network Transfer | 620.7KB | 2.9KB (compressed) | 99.5% reduction |
 | Memory Usage | High | Low | 90% reduction |
 
 ### Frontend Performance Delta
@@ -215,13 +215,13 @@ const handleDelete = useCallback(async (missionId) => {
 - **Target**: http://localhost:3001/api/missions?page=1&limit=20
 - **Duration**: 60 seconds
 - **Phases**: 5→25→50 users over 60s
-- **Total Requests**: ~2,500
+- **Total Requests**: 1,600
 
 ### Optimized Endpoint Performance
-- **Median Response Time**: 45ms (vs 2,500ms baseline)
-- **p95 Response Time**: 89ms (vs 3,000ms baseline)
-- **Throughput**: 45 requests/second (vs 2-3 req/s baseline)
-- **Error Rate**: 0.1% (vs 5-10% baseline)
+- **Median Response Time**: 7.9 ms (vs ~2.5-3s baseline)
+- **p95 Response Time**: 12.1 ms (vs ~3s baseline)
+- **Throughput**: 35 requests/second (sustained 50 req/s at peak)
+- **Error Rate**: 0% (vs 5-10% baseline)
 - **Memory Usage**: Stable under load
 
 ### Load Test Interpretation
