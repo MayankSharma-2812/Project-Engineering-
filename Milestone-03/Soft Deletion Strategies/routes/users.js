@@ -2,20 +2,30 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// GET all users in the system
+// GET all users in the system (active only)
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM users');
+    const { rows } = await db.query('SELECT * FROM users WHERE deleted_at IS NULL');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Database execution error' });
   }
 });
 
-// GET single user details by ID
+// GET only soft-deleted users (audit view)
+router.get('/audit/deleted', async (req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM users WHERE deleted_at IS NOT NULL');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Database execution error' });
+  }
+});
+
+// GET single user details by ID (active only)
 router.get('/:id', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    const { rows } = await db.query('SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL', [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json(rows[0]);
   } catch (err) {
@@ -37,17 +47,32 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE user permanently from the system
+// DELETE user (soft delete) from the system
 router.delete('/:id', async (req, res) => {
   try {
-    // Hard DELETE from users table
-    const { rowCount } = await db.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    // Soft DELETE from users table
+    const { rowCount } = await db.query(
+      'UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
+      [req.params.id]
+    );
     
     if (rowCount === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    res.json({ message: 'User permanently deleted from LedgerApp' });
+    // Cascade soft-delete accounts and transactions for this user
+    await db.query(
+      'UPDATE accounts SET deleted_at = NOW() WHERE user_id = $1 AND deleted_at IS NULL',
+      [req.params.id]
+    );
+    await db.query(
+      `UPDATE transactions SET deleted_at = NOW() 
+       WHERE account_id IN (SELECT id FROM accounts WHERE user_id = $1) 
+       AND deleted_at IS NULL`,
+      [req.params.id]
+    );
+    
+    res.json({ message: 'User soft-deleted from LedgerApp' });
   } catch (err) {
     res.status(500).json({ error: 'Delete operation failed' });
   }
