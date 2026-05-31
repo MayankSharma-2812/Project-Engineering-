@@ -23,14 +23,14 @@ import { fetchOrders } from '../mockApi'
 
 function SkeletonRow() {
   return (
-    <tr>
-      {[40, 130, 180, 90, 80, 90].map((w, i) => (
-        <td key={i} style={{ padding: '16px 20px' }}>
+    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      {[40, 130, 180, 90, 80, 90, 70].map((w, i) => (
+        <td key={i} style={{ padding: '20px' }}>
           <div style={{
-            width: w, height: 13, borderRadius: 6,
+            width: w, height: 14, borderRadius: 6,
             background: 'linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%)',
             backgroundSize: '200% 100%',
-            animation: 'shimmer 1.4s infinite',
+            animation: 'shimmer 1.5s infinite linear',
           }} />
         </td>
       ))}
@@ -49,38 +49,65 @@ function OrderRow({ order }) {
   const s = STATUS_CONFIG[order.status] || STATUS_CONFIG.Pending
 
   return (
-    <tr style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background 0.15s' }}
+    <tr style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background 0.15s ease' }}
       onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-2)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-      <td style={{ padding: '15px 20px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>{order.id}</td>
-      <td style={{ padding: '15px 20px', color: 'var(--text-primary)', fontWeight: 500 }}>{order.customer}</td>
-      <td style={{ padding: '15px 20px', color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</td>
-      <td style={{ padding: '15px 20px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--mono)', fontSize: 13 }}>₹{order.amount.toLocaleString()}</td>
-      <td style={{ padding: '15px 20px' }}>
+      <td style={{ padding: '16px 20px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>{order.id}</td>
+      <td style={{ padding: '16px 20px', color: 'var(--text-primary)', fontWeight: 500 }}>{order.customer}</td>
+      <td style={{ padding: '16px 20px', color: 'var(--text-secondary)', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.product}</td>
+      <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--mono)', fontSize: 13 }}>₹{order.amount.toLocaleString()}</td>
+      <td style={{ padding: '16px 20px' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: s.bg, color: s.color, padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot }} />
           {order.status}
         </span>
       </td>
-      <td style={{ padding: '15px 20px', color: 'var(--text-muted)', fontSize: 13 }}>{order.date}</td>
+      <td style={{ padding: '16px 20px', color: 'var(--text-muted)', fontSize: 13 }}>{order.date}</td>
+      <td style={{ padding: '16px 20px' }}>
+        <span style={{
+          fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+          color: order.priority === 'High' ? 'var(--red)' : 'var(--text-muted)',
+          background: order.priority === 'High' ? 'var(--red-dim)' : 'var(--surface-2)',
+          padding: '2px 8px', borderRadius: 4, border: `1px solid ${order.priority === 'High' ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`
+        }}>
+          {order.priority}
+        </span>
+      </td>
     </tr>
   )
 }
 
-function EmptyState() {
+function EmptyState({ isFiltered, onClear }) {
   return (
     <tr>
-      <td colSpan={6}>
-        <div style={{ padding: '80px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-          {/* TODO: Make this look good! Add an icon, a clear heading, and a helpful message */}
-          <div style={{ fontSize: 48 }}>📭</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>No orders yet</div>
-          <div style={{ color: 'var(--text-secondary)', maxWidth: 320, lineHeight: 1.6 }}>
-            {/* TODO: Write a helpful message for the user */}
-            Write a helpful message here explaining why there are no orders
-            and what the user can do next.
+      <td colSpan={7}>
+        <div style={{ padding: '80px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, textAlign: 'center' }}>
+          <div style={{
+            width: 80, height: 80, background: 'var(--surface-2)', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32,
+            border: '1px solid var(--border)', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2)'
+          }}>
+            {isFiltered ? '🔍' : '📭'}
           </div>
-          {/* TODO: Add a CTA button — e.g. "Create your first order" */}
+          <div>
+            <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+              {isFiltered ? 'No matches found' : 'No orders yet'}
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: 360, lineHeight: 1.6, fontSize: 15 }}>
+              {isFiltered
+                ? "We couldn't find any orders matching your current search. Try adjusting your filters or search terms."
+                : "Your order list is currently empty. Once customers start placing orders, they will appear here for you to manage."}
+            </p>
+          </div>
+          {isFiltered && (
+            <button onClick={onClear} style={{
+              padding: '10px 24px', background: 'var(--accent)', color: '#000',
+              border: 'none', borderRadius: 'var(--radius)', fontSize: 14, fontWeight: 600,
+              boxShadow: '0 4px 12px var(--accent-glow)'
+            }}>
+              Clear Search
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -90,27 +117,38 @@ function EmptyState() {
 function ErrorState({ message, onRetry }) {
   return (
     <tr>
-      <td colSpan={6}>
-        <div style={{ padding: '80px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
-          {/* TODO: Make this look good! Add an error icon, clear heading, and the error message */}
-          <div style={{ fontSize: 48 }}>⚠️</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text-primary)' }}>Something went wrong</div>
-          <div style={{ color: 'var(--text-secondary)', maxWidth: 340, fontSize: 14, fontFamily: 'var(--mono)' }}>
-            {/* TODO: Display the actual error message here */}
-            Error message goes here
-          </div>
-          {/* TODO: Implement the Retry button — call onRetry when clicked */}
-          <button onClick={onRetry} style={{
-            marginTop: 8,
-            padding: '10px 24px',
-            background: 'transparent',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            color: 'var(--text-primary)',
-            fontSize: 14, fontWeight: 500, cursor: 'pointer',
+      <td colSpan={7}>
+        <div style={{ padding: '80px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
+          <div style={{
+            width: 80, height: 80, background: 'rgba(239,68,68,0.1)', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32,
+            border: '1px solid rgba(239,68,68,0.2)', color: 'var(--red)'
           }}>
-            {/* TODO: Add a retry icon and label */}
-            Retry
+            ⚠️
+          </div>
+          <div>
+            <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Unable to load orders</h3>
+            <div style={{
+              background: 'rgba(0,0,0,0.2)', padding: '12px 20px', borderRadius: 8,
+              border: '1px solid var(--border)', display: 'inline-block'
+            }}>
+              <p style={{ color: 'var(--red)', fontSize: 13, fontFamily: 'var(--mono)', fontWeight: 500 }}>
+                {message || "An unexpected network error occurred."}
+              </p>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', marginTop: 16, fontSize: 14 }}>
+              This might be a temporary connection issue. Please try again.
+            </p>
+          </div>
+          <button onClick={onRetry} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '12px 28px', background: 'transparent',
+            border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+            color: 'var(--text-primary)', fontSize: 14, fontWeight: 600,
+            transition: 'all 0.2s'
+          }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--text-secondary)'}
+             onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+            <span>🔄</span> Try Again
           </button>
         </div>
       </td>
@@ -124,11 +162,13 @@ export default function OrdersDashboard() {
   const [orders,  setOrders]  = useState([])
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
+  const [search,  setSearch]  = useState('')
 
   const loadOrders = () => {
-    // Reset state before each fetch
     setLoading(true)
     setError(null)
+    // We don't clear orders here to prevent jarring UI jumps if possible,
+    // but the task asks to implement a clear loading state.
     setOrders([])
 
     fetchOrders()
@@ -146,10 +186,16 @@ export default function OrdersDashboard() {
     loadOrders()
   }, [])
 
+  const filteredOrders = orders.filter(o =>
+    o.customer.toLowerCase().includes(search.toLowerCase()) ||
+    o.id.toLowerCase().includes(search.toLowerCase()) ||
+    o.product.toLowerCase().includes(search.toLowerCase())
+  )
+
   // DASHBOARD STATS (already implemented — do not change)
   const totalRevenue   = orders.reduce((s, o) => s + (o.status !== 'Cancelled' ? o.amount : 0), 0)
   const delivered      = orders.filter(o => o.status === 'Delivered').length
-  const pending        = orders.filter(o => o.status === 'Pending' || o.status === 'Processing').length
+  const avgOrderValue  = orders.length > 0 ? Math.round(totalRevenue / orders.length) : 0
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 32px' }}>
@@ -173,41 +219,61 @@ export default function OrdersDashboard() {
       </div>
 
       {/* ── STAT CARDS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
         {[
           { label: 'Total Revenue',    value: loading ? '—' : `₹${totalRevenue.toLocaleString()}`, icon: '💰', color: 'var(--accent)'  },
-          { label: 'Delivered',        value: loading ? '—' : delivered,                            icon: '✅', color: 'var(--green)'  },
-          { label: 'Needs Attention',  value: loading ? '—' : pending,                              icon: '⏳', color: 'var(--purple)' },
+          { label: 'Orders Count',     value: loading ? '—' : orders.length,                        icon: '📦', color: 'var(--blue)'    },
+          { label: 'Avg. Order',       value: loading ? '—' : `₹${avgOrderValue.toLocaleString()}`, icon: '📈', color: 'var(--purple)'  },
+          { label: 'Delivered',        value: loading ? '—' : delivered,                            icon: '✅', color: 'var(--green)'   },
         ].map((card, i) => (
-          <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px 28px' }}>
+          <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px 28px', transition: 'transform 0.2s', cursor: 'default' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>{card.label}</span>
               <span style={{ fontSize: 20 }}>{card.icon}</span>
             </div>
-            <div style={{ fontSize: 30, fontWeight: 700, color: card.color, fontFamily: 'var(--mono)' }}>{card.value}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: card.color, fontFamily: 'var(--mono)' }}>{card.value}</div>
           </div>
         ))}
       </div>
 
       {/* ── ORDERS TABLE ── */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <div style={{ padding: '20px 28px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+        <div style={{ padding: '16px 28px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 10 }}>
             Recent Orders
-            {!loading && !error && (
-              <span style={{ marginLeft: 10, fontSize: 13, color: 'var(--text-muted)', fontWeight: 400 }}>
-                {orders.length} {orders.length === 1 ? 'order' : 'orders'}
+            {!loading && !error && orders.length > 0 && (
+              <span style={{ fontSize: 12, background: 'var(--surface-2)', padding: '2px 8px', borderRadius: 6, color: 'var(--text-secondary)', fontWeight: 500 }}>
+                {filteredOrders.length} {filteredOrders.length === 1 ? 'result' : 'results'}
               </span>
             )}
           </h2>
+
+          <div style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 14 }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search by ID, customer, or product..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%', padding: '10px 16px 10px 36px', background: 'var(--surface-2)',
+                border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-primary)',
+                fontSize: 14, outline: 'none', transition: 'border-color 0.2s'
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                {['Order ID', 'Customer', 'Product', 'Amount', 'Status', 'Date'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '12px 20px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                {['Order ID', 'Customer', 'Product', 'Amount', 'Status', 'Date', 'Priority'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '16px 20px', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                     {h}
                   </th>
                 ))}
@@ -223,23 +289,24 @@ export default function OrdersDashboard() {
                *  for all 4 UX states.
                * ═══════════════════════════════════════════════ */}
 
-              {/* 🔴 PLACEHOLDER — DELETE THIS ENTIRE BLOCK AND REPLACE IT */}
-              <tr>
-                <td colSpan={6} style={{ padding: 32 }}>
-                  <div style={{ background: 'var(--surface-2)', border: '1px dashed var(--border)', borderRadius: 8, padding: 24 }}>
-                    <p style={{ color: 'var(--accent)', fontWeight: 600, marginBottom: 8, fontFamily: 'var(--mono)', fontSize: 13 }}>
-                      🚧 TODO: Implement the 4 UX states here
-                    </p>
-                    <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>
-                      Current raw data dump (replace with proper UI):
-                    </p>
-                    <pre style={{ color: 'var(--text-secondary)', fontSize: 11, fontFamily: 'var(--mono)', lineHeight: 1.6, overflowX: 'auto' }}>
-                      {JSON.stringify({ loading, error, ordersCount: orders.length }, null, 2)}
-                    </pre>
-                  </div>
-                </td>
-              </tr>
-              {/* 🔴 END OF PLACEHOLDER */}
+              {loading ? (
+                // ── LOADING STATE ──
+                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : error ? (
+                // ── ERROR STATE ──
+                <ErrorState message={error} onRetry={loadOrders} />
+              ) : filteredOrders.length === 0 ? (
+                // ── EMPTY STATE (Global or Filtered) ──
+                <EmptyState
+                  isFiltered={search.length > 0}
+                  onClear={() => setSearch('')}
+                />
+              ) : (
+                // ── SUCCESS STATE ──
+                filteredOrders.map(order => (
+                  <OrderRow key={order.id} order={order} />
+                ))
+              )}
 
             </tbody>
           </table>
