@@ -37,7 +37,7 @@ function App() {
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibleCount, setVisibleCount] = useState(200); // BROKEN: Renders all 200 at once
+  const [visibleCount, setVisibleCount] = useState(12); // BROKEN: Renders all 200 at once
 
   // BROKEN: Double fetch on mount + no cleanup
   useEffect(() => {
