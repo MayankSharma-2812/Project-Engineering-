@@ -59,10 +59,12 @@ function App() {
   };
 
   // BROKEN: Expensive computation in render (not memoized)
-  const filteredMissions = missions.filter(mission => 
-    mission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mission.rocket.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
+  const filteredMissions = useMemo(() => {
+    return missions.filter(mission => 
+      mission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      mission.rocket.toLowerCase().includes(searchTerm.toLowerCase())
+    ).sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
+  }, [missions, searchTerm]);
 
   const handleDelete = async (missionId) => {
     // BROKEN: Unstable callback - new function on every render
