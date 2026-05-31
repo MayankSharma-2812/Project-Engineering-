@@ -21,20 +21,20 @@ const COMPONENTS = ['Authentication', 'Dashboard', 'Billing', 'API', 'Notificati
 // BUG 6: "Steps to Reproduce" accepts any number, including 0 and negatives
 // ----------------------------------------------------------------
 
-export default function App() {
-  const [form, setForm] = useState({
-    title: '',
-    severity: '',
-    component: '',
-    description: '',
-    steps: '',
-    stepsCount: '',
-  })
+const EMPTY_FORM = {
+  title: '',
+  severity: '',
+  component: '',
+  description: '',
+  steps: '',
+  stepsCount: '',
+}
 
-  // BUG: errors state is declared but never populated or displayed
+export default function App() {
+  const [form, setForm] = useState(EMPTY_FORM)
+
   const [errors, setErrors] = useState({})
 
-  // BUG: loading and serverError exist but are never used in JSX
   const [loading, setLoading] = useState(false)
   const [serverError, setServerError] = useState(null)
 
@@ -44,30 +44,67 @@ export default function App() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((f) => ({ ...f, [name]: value }))
-    // BUG: errors are never cleared when user starts fixing a field
+    
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[name]
+        return next
+      })
+    }
   }
 
-  // BUG: validate() always returns true — no real checks happen
   const validate = () => {
-    return true
+    const errs = {}
+    if (!form.title.trim()) {
+      errs.title = 'Bug title is required.'
+    }
+    if (!form.severity) {
+      errs.severity = 'Please select a severity level.'
+    }
+    if (!form.component) {
+      errs.component = 'Please select an affected component.'
+    }
+    if (!form.description.trim()) {
+      errs.description = 'Bug description is required.'
+    }
+    
+    const count = Number(form.stepsCount)
+    if (!form.stepsCount) {
+      errs.stepsCount = 'Number of steps is required.'
+    } else if (isNaN(count) || count <= 0 || !Number.isInteger(count)) {
+      errs.stepsCount = 'Number of steps must be a positive integer.'
+    }
+    return errs
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // BUG: validate() result is ignored; submission always continues
-    validate()
+    setSuccessId(null)
+    setServerError(null)
 
-    // BUG: loading is never set to true before the API call
+    const errs = validate()
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      return
+    }
+
+    setLoading(true)
     try {
       const result = await submitBugReport(form)
       setSuccessId(result.id)
       setSubmitted((prev) => [result, ...prev])
-      // BUG: form state is never reset after success
+      setForm(EMPTY_FORM)
+      setErrors({})
     } catch (err) {
-      // BUG: server error is caught but nothing is shown to the user
+      if (err.field) {
+        setErrors({ [err.field]: err.message })
+      } else {
+        setServerError(err.message || 'Something went wrong.')
+      }
     } finally {
-      // BUG: loading is never set back to false
+      setLoading(false)
     }
   }
 
@@ -90,14 +127,12 @@ export default function App() {
         <p className="section-label">New Bug Report</p>
         <form onSubmit={handleSubmit} noValidate>
 
-          {/* SUCCESS BANNER — shown after a successful submit */}
           {successId && (
             <div style={{ background: 'rgba(76,175,125,0.1)', border: '1px solid rgba(76,175,125,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#4caf7d' }}>
               ✓ Bug <strong>{successId}</strong> filed successfully!
             </div>
           )}
 
-          {/* SERVER ERROR BANNER — BUG: serverError is never set, so this never shows */}
           {serverError && (
             <div style={{ background: 'rgba(247,95,95,0.1)', border: '1px solid rgba(247,95,95,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: 14, color: '#f75f5f' }}>
               {serverError}
@@ -111,26 +146,52 @@ export default function App() {
               value={form.title}
               onChange={handleChange}
               placeholder="e.g. Checkout button unresponsive on mobile Safari"
+              style={errors.title ? { borderColor: 'var(--danger)' } : {}}
+              disabled={loading}
             />
-            {/* BUG: error message for title is never rendered */}
+            {errors.title && (
+              <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
+                ⚑ {errors.title}
+              </div>
+            )}
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>Severity <span className="req">*</span></label>
-              <select name="severity" value={form.severity} onChange={handleChange}>
+              <select 
+                name="severity" 
+                value={form.severity} 
+                onChange={handleChange}
+                style={errors.severity ? { borderColor: 'var(--danger)' } : {}}
+                disabled={loading}
+              >
                 <option value="">— Select —</option>
                 {SEVERITIES.map((s) => <option key={s}>{s}</option>)}
               </select>
-              {/* BUG: error message for severity is never rendered */}
+              {errors.severity && (
+                <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
+                  ⚑ {errors.severity}
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>Affected Component <span className="req">*</span></label>
-              <select name="component" value={form.component} onChange={handleChange}>
+              <select 
+                name="component" 
+                value={form.component} 
+                onChange={handleChange}
+                style={errors.component ? { borderColor: 'var(--danger)' } : {}}
+                disabled={loading}
+              >
                 <option value="">— Select —</option>
                 {COMPONENTS.map((c) => <option key={c}>{c}</option>)}
               </select>
-              {/* BUG: error message for component is never rendered */}
+              {errors.component && (
+                <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
+                  ⚑ {errors.component}
+                </div>
+              )}
             </div>
           </div>
 
@@ -141,8 +202,14 @@ export default function App() {
               value={form.description}
               onChange={handleChange}
               placeholder="Describe what's happening and what the expected behaviour should be…"
+              style={errors.description ? { borderColor: 'var(--danger)' } : {}}
+              disabled={loading}
             />
-            {/* BUG: error message for description is never rendered */}
+            {errors.description && (
+              <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
+                ⚑ {errors.description}
+              </div>
+            )}
           </div>
 
           <hr className="divider" />
@@ -156,6 +223,7 @@ export default function App() {
                 onChange={handleChange}
                 style={{ minHeight: 72 }}
                 placeholder="1. Go to…&#10;2. Click…&#10;3. Observe…"
+                disabled={loading}
               />
             </div>
             <div className="form-group">
@@ -166,20 +234,29 @@ export default function App() {
                 value={form.stepsCount}
                 onChange={handleChange}
                 placeholder="e.g. 3"
+                style={errors.stepsCount ? { borderColor: 'var(--danger)' } : {}}
+                disabled={loading}
               />
-              {/* BUG: accepts 0, negatives, and empty — no validation */}
+              {errors.stepsCount && (
+                <div style={{ color: 'var(--danger)', fontSize: 12, marginTop: 4 }}>
+                  ⚑ {errors.stepsCount}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* BUG: button is never disabled during loading, no spinner shown */}
-          <button type="submit" className="btn btn-primary">
-            Submit Bug Report
+          <button 
+            type="submit" 
+            className="btn btn-primary" 
+            disabled={loading}
+            style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
+          >
+            {loading ? 'Submitting...' : 'Submit Bug Report'}
           </button>
 
         </form>
       </div>
 
-      {/* Filed bugs list */}
       {submitted.length > 0 && (
         <div className="submitted-list">
           <p className="section-label" style={{ marginBottom: 8 }}>Filed This Session</p>
