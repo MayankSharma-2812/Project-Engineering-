@@ -6,12 +6,11 @@ INSERT INTO customers (id, name, email) VALUES
 (4, 'Alice Williams', 'alice.williams@example.com'),
 (5, 'Charlie Brown', 'charlie.brown@example.com');
 
--- Insert products (some with negative inventory)
--- BUG 2 Demonstration: Negative inventory count
+-- Insert products with valid non-negative inventory levels
 INSERT INTO products (id, name, sku, inventory_count, price) VALUES
 (1, 'Mechanical Keyboard', 'SKU-001', 50, 89.99),
-(2, 'Wireless Mouse', 'SKU-002', -3, 25.00), -- Negative inventory
-(3, 'USB-C Cable (1m)', 'SKU-003', -5, 12.50), -- Negative inventory
+(2, 'Wireless Mouse', 'SKU-002', 20, 25.00), -- Fixed: Non-negative inventory
+(3, 'USB-C Cable (1m)', 'SKU-003', 15, 12.50), -- Fixed: Non-negative inventory
 (4, '27-inch Monitor', 'SKU-004', 15, 299.99),
 (5, 'Laptop Stand', 'SKU-005', 10, 45.00);
 
@@ -20,10 +19,10 @@ INSERT INTO orders (id, customer_id, status, total) VALUES
 (1, 1, 'completed', 114.99),
 (2, 2, 'pending', 299.99);
 
--- BUG 1 Demonstration: Orphaned Records (customer_id 9999 doesn't exist)
+-- Fixed: customer_id 9999 updated to valid customer_id 1 (John Doe) to satisfy foreign key constraint
 INSERT INTO orders (id, customer_id, status, total) VALUES
-(3, 9999, 'completed', 50.00),
-(4, 9999, 'pending', 75.00);
+(3, 1, 'completed', 50.00),
+(4, 1, 'pending', 75.00);
 
 -- Insert order items
 INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
@@ -32,10 +31,11 @@ INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
 (2, 4, 1, 299.99);
 
 -- Insert payments
--- BUG 3 Demonstration: Duplicate payments for the same order (one 'pending', one 'completed')
+-- Fixed: Removed duplicate payment for order_id 1 to satisfy unique constraint
 INSERT INTO payments (order_id, amount, status) VALUES
-(1, 114.99, 'pending'),
-(1, 114.99, 'completed'); -- Duplicate for order_id 1
+(1, 114.99, 'completed'),
+(2, 299.99, 'pending');
+
 
 -- Continue normal sequences for SERIAL
 SELECT setval('customers_id_seq', (SELECT MAX(id) FROM customers));

@@ -2,20 +2,31 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// GET all transactions in the system
+// GET all transactions in the system (active, under active account and active user)
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM transactions');
+    const { rows } = await db.query(
+      `SELECT t.* FROM transactions t 
+       JOIN accounts a ON t.account_id = a.id 
+       JOIN users u ON a.user_id = u.id 
+       WHERE t.deleted_at IS NULL AND a.deleted_at IS NULL AND u.deleted_at IS NULL`
+    );
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Database execution error' });
   }
 });
 
-// GET transactions by account_id
+// GET transactions by account_id (active, under active account and active user)
 router.get('/account/:accountId', async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM transactions WHERE account_id = $1', [req.params.accountId]);
+    const { rows } = await db.query(
+      `SELECT t.* FROM transactions t 
+       JOIN accounts a ON t.account_id = a.id 
+       JOIN users u ON a.user_id = u.id 
+       WHERE t.account_id = $1 AND t.deleted_at IS NULL AND a.deleted_at IS NULL AND u.deleted_at IS NULL`,
+      [req.params.accountId]
+    );
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Database retrieval error' });
@@ -36,17 +47,20 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE single transaction permanently from the record
+// DELETE single transaction (soft delete) from the record
 router.delete('/:id', async (req, res) => {
   try {
-    // Hard DELETE from transactions table
-    const { rowCount } = await db.query('DELETE FROM transactions WHERE id = $1', [req.params.id]);
+    // Soft DELETE from transactions table
+    const { rowCount } = await db.query(
+      'UPDATE transactions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL',
+      [req.params.id]
+    );
     
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Transaction ID not found' });
     }
     
-    res.json({ message: 'Transaction record permanently erased from LedgerApp' });
+    res.json({ message: 'Transaction record soft-deleted from LedgerApp' });
   } catch (err) {
     res.status(500).json({ error: 'Delete operation failed' });
   }
