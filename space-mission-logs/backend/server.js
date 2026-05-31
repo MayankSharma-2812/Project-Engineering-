@@ -24,9 +24,25 @@ app.get('/api/missions', async (req, res) => {
         orderBy: { launchDate: 'desc' },
         skip,
         take: limit,
-        include: {
-          crew: true,
+        select: {
+          id: true,
+          name: true,
+          launchDate: true,
+          rocket: true,
+          status: true,
+          crew: {
+            select: {
+              id: true,
+              name: true,
+              role: true
+            }
+          },
           logs: {
+            select: {
+              id: true,
+              timestamp: true,
+              event: true
+            },
             orderBy: { timestamp: 'desc' },
             take: 10
           }
