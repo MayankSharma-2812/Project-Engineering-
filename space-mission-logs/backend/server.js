@@ -7,8 +7,7 @@ const app = express();
 const PORT = 3001;
 const prisma = new PrismaClient({ log: ['query'] });
 
-// BROKEN: No compression middleware
-// app.use(compression());
+app.use(compression());
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
