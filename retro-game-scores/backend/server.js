@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const PORT = 3001;
 const prisma = new PrismaClient();
 
-// BROKEN: No compression middleware
+// FIXED: Enable compression middleware
+app.use(compression());
 
 app.use(cors({ origin: '*' }));
 app.use(express.json());
@@ -14,13 +16,48 @@ app.use(express.json());
 // BROKEN: No pagination & over-fetching of strategyNote
 app.get('/api/scores', async (req, res) => {
   try {
-    const scores = await prisma.score.findMany({
-      orderBy: { score: 'desc' },
-      include: {
-        game: true
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [scores, totalCount] = await Promise.all([
+      prisma.score.findMany({
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          playerName: true,
+          score: true,
+          date: true,
+          game: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              year: true
+            }
+          }
+        },
+        orderBy: { score: 'desc' }
+      }),
+      prisma.score.count()
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    res.json({
+      data: scores,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage,
+        hasPrevPage
       }
     });
-    res.json(scores);
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: 'Internal server error' });

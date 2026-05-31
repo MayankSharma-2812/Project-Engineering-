@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 
-// BROKEN: Unstable prop trap - no React.memo
-const ScoreCard = ({ score, onDelete, onLike }) => {
+// FIXED: Wrapped with React.memo to prevent unnecessary re-renders
+const ScoreCard = React.memo(({ score, onDelete, onLike }) => {
   return (
     <div className="bg-gradient-to-r from-purple-900 to-blue-900 rounded-lg p-6 shadow-xl border-2 border-yellow-400">
       <div className="flex justify-between items-start mb-4">
@@ -37,40 +37,51 @@ const ScoreCard = ({ score, onDelete, onLike }) => {
       </div>
     </div>
   );
-};
+});
 
 function App() {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // BROKEN: Double fetch on mount + no AbortController cleanup
+  // FIXED: Single fetch with AbortController and proper cleanup
   useEffect(() => {
-    fetchScores();
-    fetchScores(); // Double fetch in React Strict Mode
+    const controller = new AbortController();
+
+    const fetchScoresWithCleanup = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/scores', {
+          signal: controller.signal
+        });
+        setScores(response.data.data || response.data);
+      } catch (error) {
+        if (error.name !== 'CanceledError') {
+          console.error('Failed to fetch scores:', error);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchScoresWithCleanup();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
-  const fetchScores = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('/api/scores');
-      setScores(response.data);
-    } catch (error) {
-      console.error('Failed to fetch scores:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // FIXED: Expensive computation wrapped in useMemo
+  const filteredScores = useMemo(() => {
+    return scores.filter(score =>
+      score.game.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      score.playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      score.game.genre.toLowerCase().includes(searchTerm.toLowerCase())
+    ).sort((a, b) => b.score - a.score);
+  }, [scores, searchTerm]);
 
-  // BROKEN: Expensive computation in render (no useMemo)
-  const filteredScores = scores.filter(score =>
-    score.game.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    score.playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    score.game.genre.toLowerCase().includes(searchTerm.toLowerCase())
-  ).sort((a, b) => b.score - a.score);
-
-  // BROKEN: Unstable callback reference (no useCallback)
-  const handleDelete = async (scoreId) => {
+  // FIXED: Stable callback with useCallback
+  const handleDelete = useCallback(async (scoreId) => {
     if (window.confirm('Are you sure you want to delete this high score?')) {
       try {
         setScores(scores.filter(s => s.id !== scoreId));
@@ -78,16 +89,16 @@ function App() {
         console.error('Failed to delete score:', error);
       }
     }
-  };
+  }, [scores]);
 
-  // BROKEN: Unstable callback reference (no useCallback)
-  const handleLike = async (scoreId) => {
+  // FIXED: Stable callback with useCallback
+  const handleLike = useCallback(async (scoreId) => {
     try {
       console.log(`Liked score ${scoreId}`);
     } catch (error) {
       console.error('Failed to like score:', error);
     }
-  };
+  }, []);
 
   if (loading) {
     return (
