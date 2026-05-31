@@ -10,7 +10,7 @@ const jwt = require("jsonwebtoken");
 //      is different (or missing entirely).
 // ============================================================
 
-const JWT_SECRET = "super-secret-key-123";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const authenticate = (req, res, next) => {
   try {
