@@ -1,0 +1,10 @@
+# Local environment variable file
+.env
+
+# Dependencies
+node_modules/
+
+# Production build artifacts
+dist/
+dist-ssr/
+*.local
