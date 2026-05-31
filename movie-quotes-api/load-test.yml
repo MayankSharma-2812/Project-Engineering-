@@ -12,7 +12,6 @@ config:
       name: "Peak load"
   ensure:
     - statusCode: 200
-  processor: "./processor.js"
 scenarios:
   - name: "Get all quotes (unpaginated)"
     weight: 40

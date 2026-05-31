@@ -1,141 +1,58 @@
-# Movie Quote API - Load Test Report
+# Load Test Report: Movie Quote API
 
-## 🎯 Test Configuration
+## Test Configuration
 
-### Load Test Setup
-- **Target**: http://localhost:3001
-- **Duration**: 80 seconds total (30s warmup + 20s ramp + 30s peak)
-- **Peak Concurrency**: 50 virtual users
-- **Test Phases**: 
-  - Warm up: 5 users for 30 seconds
-  - Ramp up: 25 users for 20 seconds  
-  - Peak load: 50 users for 30 seconds
+- **Tool**: Artillery (v2.0.32)
+- **Total duration**: 80 seconds (30s warm up, 20s ramp up, 30s peak load)
+- **Peak virtual users**: 50 new arrivals per second
+- **Target URL**: http://localhost:3001
+- **Recorded**: June 1, 2026
 
-### Scenarios Tested
-1. **Unpaginated GET** (40% weight): `/api/quotes/unpaginated`
-2. **Paginated GET** (40% weight): `/api/quotes?page=1&limit=20`
-3. **POST Favorites** (20% weight): `/api/favorites` with random quoteId
+## Baseline: Single-User curl Results
 
-## 📊 Expected Results Analysis
+- **GET /api/quotes/unpaginated**: 113.3 ms, 136,567 bytes
+- **GET /api/quotes?page=1&limit=20**: 2.3 ms, 2,745 bytes
+- **POST /api/favorites**: 52.0 ms
 
-### Unpaginated Endpoint Performance
-**Expected Issues**:
-- **High Memory Usage**: Each request loads all 1,000 quotes (~250KB payload)
-- **Slow Response Times**: Large JSON serialization and network transfer
-- **Lower Throughput**: Memory pressure reduces requests per second
-- **Higher p95**: Memory allocation and GC pauses affect slowest requests
+## Load Test Results: Unpaginated Endpoint
 
-**Expected Metrics**:
-- Median response time: 180-250ms
-- p95 response time: 300-400ms
-- Throughput: 15-25 requests/second
-- Error rate: 0-2% (mostly timeouts)
+- **Median response time**: 108.9 ms
+- **p95 response time**: 117.9 ms
+- **Throughput**: 43 requests per second
+- **Error rate**: 0%
 
-### Paginated Endpoint Performance
-**Expected Advantages**:
-- **Low Memory Usage**: Only 20 quotes per request (~5KB payload)
-- **Fast Response Times**: Small JSON serialization, quick network transfer
-- **Higher Throughput**: Minimal memory pressure
-- **Consistent p95**: Predictable performance under load
+## Load Test Results: Paginated Endpoint
 
-**Expected Metrics**:
-- Median response time: 120-160ms
-- p95 response time: 180-220ms
-- Throughput: 30-45 requests/second
-- Error rate: 0-1%
+- **Median response time**: 0 ms (average 0.4 ms)
+- **p95 response time**: 1 ms
+- **Throughput**: 31 requests per second (sustained 50 requests per second at peak)
+- **Error rate**: 0%
 
-### POST Favorites Performance
-**Expected Issues**:
-- **Blocking Operations**: 50ms synchronous blocking affects event loop
-- **Concurrency Bottleneck**: Blocking reduces overall server capacity
-- **Elevated p95**: Blocking compounds under load
+## Load Test Results: POST /favorites
 
-**Expected Metrics**:
-- Median response time: 60-80ms
-- p95 response time: 120-180ms
-- Throughput: 10-20 requests/second
-- Error rate: 0-3%
+- **Median response time**: 2143.5 ms
+- **p95 response time**: 6838.0 ms
+- **Error rate**: 65.4% (1,406 failed requests out of 2,150 total)
+- **Discovered errors**: `ECONNREFUSED` (791), `ERR_SOCKET_TIMEOUT` (615)
 
-## 🔍 Performance Comparison Analysis
+## Comparison and Analysis
 
-### Why Pagination Dramatically Improves Performance
+The GET endpoints show a massive difference in efficiency and throughput. The unpaginated endpoint `/api/quotes/unpaginated` serialized and returned all 1,000 movie quotes (approx. 136KB of payload) on every single request. Although running on a fast local machine kept its p95 response time around 118 ms (mostly due to the 100ms artificial delay), the bandwidth consumed was a massive **293.6 MB** for 2,150 requests. This translates to high memory allocation and CPU overhead due to serializing 1,000 JSON objects for every request.
 
-1. **Memory Efficiency**: 
-   - Unpaginated: 250KB per request × 50 users = 12.5MB memory pressure
-   - Paginated: 5KB per request × 50 users = 250KB memory pressure
-   - **98% reduction in memory usage**
+In contrast, the paginated endpoint `/api/quotes?page=1&limit=20` sliced the dataset down to only 20 quotes, delivering a compact 2.7KB payload. This led to a dramatic reduction in response time (median response time of 0 ms, p95 of 1 ms) and total downloaded bytes of only **5.9 MB** (a **98% reduction** in network bandwidth usage). By returning only the necessary subset of quotes, the paginated endpoint minimizes serialization time, network latency, and memory pressure.
 
-2. **Network Transfer**:
-   - Unpaginated: Large JSON payloads cause network congestion
-   - Paginated: Small payloads transfer quickly
-   - **95% reduction in bandwidth usage**
+The POST endpoint performance was completely disastrous. Under peak concurrency of 50 users/sec, the error rate spiked to 65.4%, and the p95 latency reached 6.8 seconds. This was caused by the 50ms synchronous blocking loop `while (Date.now() - start < 50)` inside the handler. Because Node.js is single-threaded, this loop blocks the event loop entirely. As requests stack up, they block subsequent requests from entering or completing. This quickly saturates the OS TCP backlog, causing connection refusals (`ECONNREFUSED`) and connection socket timeouts (`ERR_SOCKET_TIMEOUT`).
 
-3. **CPU Usage**:
-   - Unpaginated: JSON.stringify() on 1,000 objects = heavy CPU
-   - Paginated: JSON.stringify() on 20 objects = minimal CPU
-   - **95% reduction in serialization overhead**
+## What p95 Means and Why It Matters
 
-4. **Garbage Collection**:
-   - Unpaginated: Large objects create frequent GC pauses
-   - Paginated: Small objects, less GC pressure
-   - **Consistent response times**
+The **p95 (95th percentile)** response time represents the latency experienced by the slowest 5% of users. For example, if a test has a p95 response time of 118 ms, it means 95% of all requests completed in 118 ms or faster, and the remaining 5% took longer than 118 ms.
 
-### p95 Response Time Significance
+While the median (p50) response time indicates typical performance, it hides worst-case scenarios and outliers. In modern web design, a poor p95 latency translates to a poor experience for 1 in 20 users. If your API has a median of 50ms but a p95 of 5,000ms, a significant number of your users are experiencing frustrating lags, which can lead to high page exit rates and loss of customer trust. In our POST favorites load test, the median was 2,143 ms, but the p95 was a staggering 6,838 ms, meaning 5% of the users waited nearly 7 seconds or more for their action to register (or fail entirely). This highlights why engineers must prioritize p95 and p99 metrics rather than averages.
 
-The p95 metric is crucial because it represents the experience of the slowest 5% of users:
+## Discovered Issues
 
-- **Unpaginated p95 (300-400ms)**: Users notice lag, poor UX
-- **Paginated p95 (180-220ms)**: Users experience snappy responsiveness
-- **50% improvement in worst-case user experience**
-
-### Throughput Impact
-
-- **Unpaginated (15-25 req/s)**: Server struggles with concurrency
-- **Paginated (30-45 req/s)**: Server handles 2x more requests
-- **Direct correlation with business capacity**
-
-## 🚨 Intentional Errors Discovered Under Load
-
-1. **CORS Issues**: May cause cross-origin request failures
-2. **Pagination Math Error**: Total count off by 10 affects client pagination
-3. **Missing Input Validation**: Invalid quoteIds may cause errors
-4. **Event Loop Blocking**: POST operations slow down all requests
-5. **No Rate Limiting**: Server vulnerable to overload
-
-## 📈 Business Impact
-
-### Before Pagination Fix
-- **User Experience**: Slow page loads, visible lag
-- **Server Costs**: High memory and CPU usage
-- **Scalability**: Cannot handle user growth
-- **Revenue Impact**: Poor UX reduces engagement
-
-### After Pagination Fix
-- **User Experience**: Fast, responsive interface
-- **Server Costs**: 95% reduction in resource usage
-- **Scalability**: Handles 10x user growth
-- **Revenue Impact**: Better UX increases conversion
-
-## 🎯 Recommendations
-
-1. **Implement Pagination**: Critical for performance and scalability
-2. **Add Compression**: Further reduce network transfer by 70%
-3. **Fix Blocking Operations**: Use async patterns
-4. **Add Input Validation**: Prevent errors and improve reliability
-5. **Implement Caching**: Cache frequently accessed pages
-6. **Add Rate Limiting**: Protect against abuse
-
-## 📝 Test Commands
-
-```bash
-# Install Artillery
-npm install -g artillery
-
-# Run load test
-artillery run load-test.yml
-
-# Monitor system resources during test
-# Use htop/Task Manager to observe memory and CPU
-```
-
-This load test clearly demonstrates why pagination is not just an optimization but a necessity for scalable API design.
+1. **CORS Policy (`server.js` line 24)**: The server uses an overly permissive origin policy `app.use(cors({ origin: '*' }))`. While it avoids development errors, this is a security risk in production.
+2. **Pagination Off-by-One / Wrong Total Count (`server.js` line 47)**: The total quotes count is off by 10 (`total = movieQuotes.length - 10`). This corrupts frontend pagination logic.
+3. **No Input Validation (`server.js` line 65)**: The POST `/api/favorites` endpoint doesn't validate `quoteId` (e.g., checking if it exists, is an integer, or fits inside the 1..1000 range).
+4. **Event Loop Blocking (`server.js` line 73)**: The POST endpoint contains a 50ms synchronous blocking `while` loop that stalls the Node.js single-threaded event loop, leading to the 65.4% error rate and multi-second p95 latencies observed under load.
+5. **No Network Compression**: The large unpaginated payload (~136KB) is sent uncompressed, increasing network delivery times.
