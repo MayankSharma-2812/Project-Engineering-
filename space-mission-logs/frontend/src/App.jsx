@@ -73,17 +73,17 @@ function App() {
     ).sort((a, b) => new Date(b.launchDate) - new Date(a.launchDate));
   }, [missions, searchTerm]);
 
-  const handleDelete = async (missionId) => {
+  const handleDelete = useCallback(async (missionId) => {
     // BROKEN: Unstable callback - new function on every render
     if (window.confirm('Are you sure you want to delete this mission?')) {
       try {
         // This would normally call DELETE API
-        setMissions(missions.filter(m => m.id !== missionId));
+        setMissions(prev => prev.filter(m => m.id !== missionId));
       } catch (error) {
         console.error('Failed to delete mission:', error);
       }
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -120,7 +120,7 @@ function App() {
             <MissionCard 
               key={mission.id} 
               mission={mission}
-              onDelete={() => handleDelete(mission.id)}
+              onDelete={handleDelete}
             />
           ))}
         </div>
