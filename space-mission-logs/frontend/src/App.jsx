@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 
+const CARD_STYLE = { marginBottom: '8px' };
+
 // BROKEN: Unstable prop trap - creates new object on every render
-const MissionCard = ({ mission }) => {
+const MissionCard = React.memo(({ mission, onDelete }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200" style={{ marginBottom: '8px' }}>
+    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200" style={CARD_STYLE}>
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-bold text-gray-900">{mission.name}</h3>
         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
@@ -29,7 +31,7 @@ const MissionCard = ({ mission }) => {
       </div>
     </div>
   );
-};
+});
 
 function App() {
   const [missions, setMissions] = useState([]);
