@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const PORT = 3001;
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ log: ['query'] });
 
 // BROKEN: No compression middleware
 // app.use(compression());
@@ -13,33 +13,19 @@ const prisma = new PrismaClient();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// BROKEN: N+1 Query Problem
 app.get('/api/missions', async (req, res) => {
   try {
-    // Fetch all missions first (1 query)
     const missions = await prisma.mission.findMany({
-      orderBy: { launchDate: 'desc' }
+      orderBy: { launchDate: 'desc' },
+      include: {
+        crew: true,
+        logs: {
+          orderBy: { timestamp: 'desc' },
+          take: 10
+        }
+      }
     });
 
-    // Then loop to fetch crew and logs for each mission (N queries)
-    for (const mission of missions) {
-      const crew = await prisma.crew.findMany({
-        where: { missionId: mission.id },
-        include: { crew: true }
-      });
-      
-      const logs = await prisma.missionLog.findMany({
-        where: { missionId: mission.id },
-        orderBy: { timestamp: 'desc' },
-        take: 10
-      });
-      
-      mission.crew = crew;
-      mission.logs = logs;
-    }
-
-    // BROKEN: No pagination - returns all 200 missions
-    // BROKEN: Over-fetching - returns all columns including large description
     res.json(missions);
   } catch (error) {
     console.error('Database error:', error);
