@@ -1,0 +1,20 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    - duration: 20
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 20
+      arrivalRate: 25
+      name: "Ramp up"
+    - duration: 20
+      arrivalRate: 50
+      name: "Peak load"
+  ensure:
+    - statusCode: 200
+scenarios:
+  - name: "Get paginated missions (optimized)"
+    weight: 100
+    flow:
+      - get:
+          url: "/api/missions?page=1&limit=20"

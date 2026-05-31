@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { summarizeNotes } from './services/aiService.js';
 
 dotenv.config();
 
@@ -23,7 +24,31 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// TODO: Add POST /api/summarize route here — this is where the secure AI call will live
+// POST /api/summarize route
+app.post('/api/summarize', async (req, res) => {
+  const { notes } = req.body;
+
+  if (!notes || typeof notes !== 'string' || !notes.trim()) {
+    return res.status(400).json({
+      success: false,
+      error: 'Notes content is required.'
+    });
+  }
+
+  try {
+    const summary = await summarizeNotes(notes);
+    res.json({
+      success: true,
+      data: { summary }
+    });
+  } catch (error) {
+    console.error('Summarize error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Internal server error during summarization.'
+    });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
