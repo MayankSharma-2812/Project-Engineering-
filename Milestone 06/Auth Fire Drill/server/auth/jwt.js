@@ -1,12 +1,19 @@
 
 const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-// BROKEN PART 1: Hardcoded secret & no expiry
-const SECRET = 'fragments-secret-key';
+// FIXED: Get secret from environment variable
+const SECRET = process.env.JWT_SECRET;
+
+// FIXED: Validate secret exists on startup
+if (!SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required');
+  process.exit(1);
+}
 
 const signToken = (payload) => {
-  // BROKEN PART 1: expiresIn not set
-  return jwt.sign(payload, SECRET);
+  // FIXED: Add 1-hour expiry
+  return jwt.sign(payload, SECRET, { expiresIn: '1h' });
 };
 
 const verifyToken = (token) => {

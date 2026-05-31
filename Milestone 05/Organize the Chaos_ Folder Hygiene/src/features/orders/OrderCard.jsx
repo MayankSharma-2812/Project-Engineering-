@@ -1,6 +1,6 @@
 import React from 'react';
 import { Package, ChevronRight, Calendar, Calculator, Box } from 'lucide-react';
-import { formatCurrency } from './formatCurrency';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 const OrderCard = ({ order }) => {
   return (

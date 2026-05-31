@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
-import Button from './Button';
+import Modal from '../../components/Modal';
+import Button from '../../components/Button';
 import { submitOrder } from './cartService';
 import { PackageCheck, CheckCircle2, ChevronRight } from 'lucide-react';
 
