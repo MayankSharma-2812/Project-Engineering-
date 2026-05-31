@@ -15,18 +15,38 @@ app.use(express.json());
 
 app.get('/api/missions', async (req, res) => {
   try {
-    const missions = await prisma.mission.findMany({
-      orderBy: { launchDate: 'desc' },
-      include: {
-        crew: true,
-        logs: {
-          orderBy: { timestamp: 'desc' },
-          take: 10
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const [missions, totalCount] = await Promise.all([
+      prisma.mission.findMany({
+        orderBy: { launchDate: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          crew: true,
+          logs: {
+            orderBy: { timestamp: 'desc' },
+            take: 10
+          }
         }
+      }),
+      prisma.mission.count()
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    res.json({
+      data: missions,
+      meta: {
+        total: totalCount,
+        page,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
       }
     });
-
-    res.json(missions);
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: 'Internal server error' });
