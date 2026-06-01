@@ -1,12 +1,6 @@
-// 🚨 BROKEN: This component is doing WAY too much.
-// It mixes UI, data fetching, error handling all in one place.
-// As a new dev joining this team, your job is to clean this up!
-
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-
-// ❌ BAD: API URL hardcoded at the top — what if it changes?
-const BASE_URL = 'https://fakestoreapi.com'
+import { productService, cartService } from '../services/api'
 
 const enrich = (p) => ({
   ...p,
@@ -26,60 +20,39 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('all')
 
-  // ❌ BAD: Raw fetch with no interceptors, no token injection, inconsistent error handling
   useEffect(() => {
-    setLoading(true)
-    fetch('https://fakestoreapi.com/products') // hardcoded again!
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load products')
-        return res.json()
-      })
-      .then(data => {
-        setProducts(data.map(enrich))
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          productService.getProducts(),
+          productService.getCategories()
+        ])
+        setProducts(productsRes.data.map(enrich))
+        setCategories(['all', ...categoriesRes.data])
+      } catch (err) {
+        setError(err.message || 'Failed to load data')
+      } finally {
         setLoading(false)
-      })
-      .catch(err => {
-        setError(err.message) // no global error handler — each component reinvents the wheel
-        setLoading(false)
-      })
+      }
+    }
+    fetchData()
   }, [])
 
-  // ❌ BAD: Second separate fetch — duplicated pattern, no code sharing
-  useEffect(() => {
-    fetch('https://fakestoreapi.com/products/categories') // another hardcoded URL
-      .then(res => res.json()) // not even checking res.ok!
-      .then(data => setCategories(['all', ...data]))
-      .catch(err => console.error('Failed to load categories:', err)) // silently failing!
-  }, [])
-
-  // ❌ BAD: Token grabbed manually every time, copy-pasted pattern
-  const handleAddToCart = (product) => {
-    const token = localStorage.getItem('auth_token')
-
-    fetch('https://fakestoreapi.com/carts', { // URL #3 hardcoded
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`, // repeated in every component
-      },
-      body: JSON.stringify({
+  const handleAddToCart = async (product) => {
+    try {
+      await cartService.addToCart({
         userId: 1,
         date: new Date().toISOString(),
         products: [{ productId: product.id, quantity: 1 }],
-      }),
-    })
-      .then(res => res.json())
-      .then(() => {
-        setCart(prev => [...prev, product.id])
-        setCartMsg(`Added "${product.title.slice(0, 25)}..."`)
-        setTimeout(() => setCartMsg(''), 3000)
       })
-      .catch(err => {
-        // ❌ No global 401 handling — user just sees a broken UI
-        console.error('Cart error:', err)
-        setCartMsg('Failed to add to cart')
-        setTimeout(() => setCartMsg(''), 3000)
-      })
+      setCart(prev => [...prev, product.id])
+      setCartMsg(`Added "${product.title.slice(0, 25)}..."`)
+      setTimeout(() => setCartMsg(''), 3000)
+    } catch (err) {
+      setCartMsg('Failed to add to cart')
+      setTimeout(() => setCartMsg(''), 3000)
+    }
   }
 
   const filtered = products
