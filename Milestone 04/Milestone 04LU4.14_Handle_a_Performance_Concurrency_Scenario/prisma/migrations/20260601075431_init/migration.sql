@@ -42,9 +42,6 @@ CREATE TABLE "Booking" (
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Booking_seatId_showId_key" ON "Booking"("seatId", "showId");
-
 -- AddForeignKey
 ALTER TABLE "Seat" ADD CONSTRAINT "Seat_showId_fkey" FOREIGN KEY ("showId") REFERENCES "Show"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
