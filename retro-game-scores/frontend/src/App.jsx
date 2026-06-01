@@ -80,16 +80,12 @@ function App() {
     ).sort((a, b) => b.score - a.score);
   }, [scores, searchTerm]);
 
-  // FIXED: Stable callback with useCallback
-  const handleDelete = useCallback(async (scoreId) => {
+  // FIXED: Stable callback with useCallback and functional state update to keep dependency array empty []
+  const handleDelete = useCallback((scoreId) => {
     if (window.confirm('Are you sure you want to delete this high score?')) {
-      try {
-        setScores(scores.filter(s => s.id !== scoreId));
-      } catch (error) {
-        console.error('Failed to delete score:', error);
-      }
+      setScores(prev => prev.filter(s => s.id !== scoreId));
     }
-  }, [scores]);
+  }, []);
 
   // FIXED: Stable callback with useCallback
   const handleLike = useCallback(async (scoreId) => {

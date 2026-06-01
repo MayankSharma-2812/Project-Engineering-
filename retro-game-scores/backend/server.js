@@ -49,11 +49,11 @@ app.get('/api/scores', async (req, res) => {
 
     res.json({
       data: scores,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalCount,
+      meta: {
+        total: totalCount,
+        page,
         limit,
+        totalPages,
         hasNextPage,
         hasPrevPage
       }
