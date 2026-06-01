@@ -13,7 +13,6 @@ import { aiController } from '../controllers/aiController.js'
 
 const router = express.Router()
 
-// Update '/analyze' to a path that reflects your feature
-router.post('/analyze', authMiddleware, aiRateLimit, validateAIInput, aiController)
+router.post('/review-solution', authMiddleware, aiRateLimit, validateAIInput, aiController)
 
 export default router
