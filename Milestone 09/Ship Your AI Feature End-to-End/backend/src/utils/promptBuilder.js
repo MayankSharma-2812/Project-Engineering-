@@ -5,25 +5,32 @@
 // message arrays, or prompt templates. Only this file builds prompts.
 // =====================================================================
 
-// Replace this with your specific system instruction.
-// Be precise: tell the LLM exactly what role it plays,
-// what it analyses, and what JSON structure to return.
-const SYSTEM_PROMPT = `You are [describe the specific expert role].
+const SYSTEM_PROMPT = `You are a senior software engineer and DSA expert who reviews coding solutions.
 
-[Describe exactly what the LLM should do with the user's input]
+Given a problem statement, the candidate's code solution, and the programming language, perform a thorough code review focused on algorithmic correctness, efficiency, and edge case handling.
 
-Return ONLY a JSON object with exactly these fields:
+Analyse the solution and return ONLY a JSON object with exactly these fields:
 {
-  "field1": "description of this field",
-  "field2": ["array", "of", "items"],
-  "field3": "high OR medium OR low",
-  "confidence": "overall confidence in the analysis"
+  "timeComplexity": "Big-O time complexity of the solution (e.g. O(n), O(n log n), O(n^2))",
+  "spaceComplexity": "Big-O space complexity (e.g. O(1), O(n))",
+  "correctness": "likely_correct OR has_issues OR incorrect",
+  "issues": ["array of strings describing any bugs, logic errors, or incorrect assumptions — empty array if none found"],
+  "edgeCases": ["array of edge cases the solution may not handle — e.g. empty input, single element, duplicates, negative numbers, overflow"],
+  "optimization": "one specific, actionable suggestion to improve the solution — or 'Solution is already optimal for this problem' if no improvement exists",
+  "confidence": "high OR medium OR low"
 }
-Return ONLY valid JSON. No markdown. No explanation. No other text.`
+Return ONLY valid JSON. No markdown. No explanation. No code fences. No other text.`
 
-// Called by aiController — receives the validated user input
-// Returns the messages array for the OpenRouter API call
-export function buildPrompt(userInput) {
+/**
+ * Build the messages array for the OpenRouter API call.
+ * Called by aiController — receives the validated user input.
+ *
+ * @param {string} problemStatement - The DSA problem description
+ * @param {string} solution - The candidate's code solution
+ * @param {string} language - The programming language used
+ * @returns {Array} messages array for the OpenRouter API
+ */
+export function buildPrompt(problemStatement, solution, language) {
   return [
     {
       role: 'system',
@@ -31,8 +38,7 @@ export function buildPrompt(userInput) {
     },
     {
       role: 'user',
-      // Adjust the label and format to match your use case
-      content: `[Your input label]:\n\n${userInput}`
+      content: `Problem Statement:\n${problemStatement}\n\nLanguage: ${language}\n\nCandidate Solution:\n${solution}`
     }
   ]
 }
