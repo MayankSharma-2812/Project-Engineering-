@@ -8,7 +8,7 @@ async function createBooking({ userId, seatId, showId }) {
     });
     return { success: true, booking };
   } catch (err) {
-    if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+    if (err.code === 'P2002') {
       return { success: false, status: 409, message: 'Seat already taken' };
     }
     throw err;
