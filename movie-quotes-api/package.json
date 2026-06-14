@@ -1,0 +1,15 @@
+{
+  "name": "movie-quotes-api",
+  "version": "1.0.0",
+  "description": "Movie Quote API with 1,000 famous quotes",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}
