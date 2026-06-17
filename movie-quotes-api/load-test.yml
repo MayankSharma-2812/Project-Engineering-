@@ -1,0 +1,32 @@
+config:
+  target: "http://localhost:3001"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 20
+      arrivalRate: 25
+      name: "Ramp up"
+    - duration: 30
+      arrivalRate: 50
+      name: "Peak load"
+  ensure:
+    - statusCode: 200
+scenarios:
+  - name: "Get all quotes (unpaginated)"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/quotes/unpaginated"
+  - name: "Get paginated quotes (page 1, limit 20)"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/quotes?page=1&limit=20"
+  - name: "Add to favorites"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/favorites"
+          json:
+            quoteId: "{{ $randomInt(1,1000) }}"

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLogin } from './useLogin';
-import Button from './Button';
-import Spinner from './Spinner';
+import Button from '../../components/Button';
+import Spinner from '../../components/Spinner';
 
 const LoginForm = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');

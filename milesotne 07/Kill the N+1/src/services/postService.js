@@ -1,26 +1,43 @@
 import prisma from '../../lib/prisma.js';
 
-export async function getAllPostsWithAuthors() {
-  const posts = await prisma.post.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+export async function getAllPostsWithAuthors(page = 1, limit = 20) {
+  const skip = (page - 1) * limit;
 
-  const postsWithAuthors = await Promise.all(
-    posts.map(async (post) => {
-      const author = await prisma.user.findUnique({
-        where: { id: post.authorId },
-        select: { id: true, name: true, email: true },
-      });
+  const [posts, totalCount] = await Promise.all([
+    prisma.post.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        createdAt: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    }),
+    prisma.post.count(),
+  ]);
 
-      return {
-        id: post.id,
-        title: post.title,
-        body: post.body,
-        createdAt: post.createdAt,
-        author,
-      };
-    })
-  );
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
 
-  return postsWithAuthors;
+  return {
+    data: posts,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalCount,
+      limit,
+      hasNextPage,
+      hasPrevPage,
+    },
+  };
 }

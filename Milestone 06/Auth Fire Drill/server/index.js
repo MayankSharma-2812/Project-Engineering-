@@ -7,9 +7,11 @@ const fragmentRoutes = require('./routes/fragments');
 const app = express();
 const PORT = 5001;
 
-// BROKEN PART 5: CSRF vulnerability (no protection)
-// CORS set to * (accepts requests from any origin)
-app.use(cors({ origin: '*' }));
+// FIXED: Restrict CORS to trusted origin only
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' ? 'http://localhost:3000' : 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
